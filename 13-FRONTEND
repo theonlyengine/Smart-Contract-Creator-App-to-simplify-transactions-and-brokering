@@ -1,0 +1,197 @@
+#INITIALIZE REACT APP
+
+cd ..
+npx create-react-app frontend
+cd frontend
+
+#INSTALL DEPENDENCIES
+
+npm install axios react-router-dom
+
+#SET UP REACT ROUTER
+
+// frontend/src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Register from './components/Register';
+import Profile from './components/Profile';
+import Chat from './components/Chat';
+
+function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/register" component={Register} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/" component={Register} />
+      </Switch>
+    </Router>
+  );
+}
+
+export default App;
+
+# CREATE REGISTER COMPONENT (REGISTER.JS)
+
+// frontend/src/components/Register.js
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function Register() {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/users/register', {
+        username,
+        email,
+        password
+      });
+      alert(response.data);
+    } catch (error) {
+      console.error('Error registering user:', error);
+      alert('Error registering user');
+    }
+  };
+
+  return (
+    <div>
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Username:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  );
+}
+
+export default Register;
+
+
+
+# CREATE PROFILE COMPONENT
+
+// frontend/src/components/Profile.js
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function Profile() {
+  const [userId, setUserId] = useState('');
+  const [personalityTraits, setPersonalityTraits] = useState({});
+  const [preferences, setPreferences] = useState({});
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/users/profile', {
+        userId,
+        personalityTraits,
+        preferences
+      });
+      alert(response.data);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Error updating profile');
+    }
+  };
+
+  return (
+    <div>
+      <h1>Profile</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>User ID:</label>
+          <input
+            type="text"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Personality Traits:</label>
+          <textarea
+            value={JSON.stringify(personalityTraits)}
+            onChange={(e) => setPersonalityTraits(JSON.parse(e.target.value))}
+          />
+        </div>
+        <div>
+          <label>Preferences:</label>
+          <textarea
+            value={JSON.stringify(preferences)}
+            onChange={(e) => setPreferences(JSON.parse(e.target.value))}
+          />
+        </div>
+        <button type="submit">Update Profile</button>
+      </form>
+    </div>
+  );
+}
+
+export default Profile;
+
+#CREATE CHAT COMPONENT
+
+// frontend/src/components/Chat.js
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function Chat() {
+  const [message, setMessage] = useState('');
+  const [responses, setResponses] = useState([]);
+
+  const sendMessage = async () => {
+    const response = await axios.post('http://localhost:5000/api/conversation/chat', { message });
+    setResponses([...responses, { user: message, ai: response.data.content }]);
+    setMessage('');
+  };
+
+  return (
+    <div>
+      <h1>AI Life Partner Chat</h1>
+      <div className="chat-box">
+        {responses.map((res, index) => (
+          <div key={index}>
+            <p><strong>You:</strong> {res.user}</p>
+            <p><strong>AI:</strong> {res.ai}</p>
+          </div>
+        ))}
+      </div>
+      <input 
+        type="text" 
+        value={message} 
+        onChange={(e) => setMessage(e.target.value)} 
+        placeholder="Type your message here..." 
+      />
+      <button onClick={sendMessage}>Send</button>
+    </div>
+  );
+}
+
+export default Chat;
