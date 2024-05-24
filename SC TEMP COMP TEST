@@ -1,0 +1,13 @@
+#RUN
+cd backend
+node server.js
+
+#RUN
+cd frontend
+npm start
+
+
+
+#//Go to the /contract-template route in your application.
+#//Select a template, fill out the form, and generate the contract.
+#//Verify that the smart contract is created and interacts correctly with the blockchain.
