@@ -1,0 +1,178 @@
+#TEMPLATE COMPONENT
+
+// frontend/src/components/ContractTemplate.js
+import React, { useState } from 'react';
+import useServiceContract from '../hooks/useServiceContract';
+
+const templates = {
+  serviceAgreement: {
+    description: "Service Agreement between a provider and client",
+    fields: [
+      { label: "Client Address", name: "client", type: "text" },
+      { label: "Service Description", name: "description", type: "text" },
+      { label: "Price", name: "price", type: "number" }
+    ]
+  },
+  // Add more templates as needed
+};
+
+const ContractTemplate = () => {
+  const { account, contract } = useServiceContract();
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [formData, setFormData] = useState({});
+
+  const handleTemplateChange = (e) => {
+    setSelectedTemplate(e.target.value);
+    setFormData({});
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (contract) {
+      const template = templates[selectedTemplate];
+      await contract.methods.createContract(
+        formData.client,
+        formData.description,
+        formData.price
+      ).send({ from: account });
+    }
+  };
+
+  return (
+    <div>
+      <h1>Generate Smart Contract</h1>
+      <div>
+        <label>Select Template: </label>
+        <select value={selectedTemplate} onChange={handleTemplateChange}>
+          <option value="">Select</option>
+          {Object.keys(templates).map((key) => (
+            <option key={key} value={key}>
+              {templates[key].description}
+            </option>
+          ))}
+        </select>
+      </div>
+      {selectedTemplate && (
+        <form onSubmit={handleSubmit}>
+          {templates[selectedTemplate].fields.map((field) => (
+            <div key={field.name}>
+              <label>{field.label}: </label>
+              <input
+                type={field.type}
+                name={field.name}
+                value={formData[field.name] || ''}
+                onChange={handleInputChange}
+              />
+            </div>
+          ))}
+          <button type="submit">Generate Contract</button>
+        </form>
+      )}
+    </div>
+  );
+};
+
+export default ContractTemplate;
+
+
+
+
+# UPDATE CONTRACT IN SOLIDITY 
+
+// smart-contracts/contracts/ServiceContract.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ServiceContract {
+    address public provider;
+    address public client;
+    string public serviceDescription;
+    uint256 public price;
+    bool public isCompleted;
+    
+    event ContractCreated(address provider, address client, string serviceDescription, uint256 price);
+    event ServiceCompleted(address client);
+
+    constructor(address _client, string memory _serviceDescription, uint256 _price) {
+        provider = msg.sender;
+        client = _client;
+        serviceDescription = _serviceDescription;
+        price = _price;
+        isCompleted = false;
+        emit ContractCreated(provider, client, serviceDescription, price);
+    }
+
+    function completeService() public {
+        require(msg.sender == client, "Only the client can mark the service as completed.");
+        isCompleted = true;
+        emit ServiceCompleted(client);
+    }
+
+    function releasePayment() public {
+        require(isCompleted, "Service must be completed before releasing payment.");
+        payable(provider).transfer(price);
+    }
+
+    receive() external payable {}
+}
+
+
+# COMPILE AND MIGRATE UPDATED CONTRACT
+
+cd smart-contracts
+truffle compile
+truffle migrate --reset
+
+
+# INTEGRATE NEW COMPONENT INTO APP
+
+// frontend/src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Register from './components/Register';
+import Profile from './components/Profile';
+import Chat from './components/Chat';
+import ContractTemplate from './components/ContractTemplate';
+
+function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/register" component={Register} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/contract-template" component={ContractTemplate} />
+        <Route path="/" component={Register} />
+      </Switch>
+    </Router>
+  );
+}
+
+export default App;
+
+
+#NAVIGATE CONTRACT
+
+// frontend/src/components/Header.js
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Header = () => {
+  return (
+    <nav>
+      <ul>
+        <li><Link to="/register">Register</Link></li>
+        <li><Link to="/profile">Profile</Link></li>
+        <li><Link to="/chat">Chat</Link></li>
+        <li><Link to="/contract-template">Generate Contract</Link></li>
+      </ul>
+    </nav>
+  );
+};
+
+export default Header;
