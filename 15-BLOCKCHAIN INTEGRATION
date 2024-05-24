@@ -1,0 +1,213 @@
+#INSTALL TRUFFLE AND GANACHE
+
+npm install -g truffle
+npm install -g ganache-cli
+
+#INITIALIZE
+
+mkdir smart-contracts
+cd smart-contracts
+truffle init
+
+
+#CREATE FILE ServiceContract.sol IN CONTRACTS.
+
+// smart-contracts/contracts/ServiceContract.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ServiceContract {
+    address public provider;
+    address public client;
+    string public serviceDescription;
+    uint256 public price;
+    bool public isCompleted;
+    
+    event ContractCreated(address provider, address client, string serviceDescription, uint256 price);
+    event ServiceCompleted(address client);
+
+    constructor(address _client, string memory _serviceDescription, uint256 _price) {
+        provider = msg.sender;
+        client = _client;
+        serviceDescription = _serviceDescription;
+        price = _price;
+        isCompleted = false;
+        emit ContractCreated(provider, client, serviceDescription, price);
+    }
+
+    function completeService() public {
+        require(msg.sender == client, "Only the client can mark the service as completed.");
+        isCompleted = true;
+        emit ServiceCompleted(client);
+    }
+
+    function releasePayment() public {
+        require(isCompleted, "Service must be completed before releasing payment.");
+        payable(provider).transfer(price);
+    }
+
+    receive() external payable {}
+}
+
+
+
+#COMPILE AND MIGRATE
+
+// smart-contracts/truffle-config.js
+module.exports = {
+  networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: "*"
+    }
+  },
+  compilers: {
+    solc: {
+      version: "0.8.0"
+    }
+  }
+};
+
+truffle compile
+truffle migrate
+
+
+#INSTALL WEB3.JS
+
+cd ../frontend
+npm install web3
+
+
+#CREATE SMART CONTRACT INTERACTION IN REACT
+
+// frontend/src/hooks/useServiceContract.js
+import { useState, useEffect } from 'react';
+import Web3 from 'web3';
+import ServiceContract from '../contracts/ServiceContract.json';
+
+const useServiceContract = () => {
+  const [account, setAccount] = useState('');
+  const [contract, setContract] = useState(null);
+
+  useEffect(() => {
+    const loadBlockchainData = async () => {
+      const web3 = new Web3(Web3.givenProvider || "http://localhost:7545");
+      const accounts = await web3.eth.requestAccounts();
+      setAccountTo continue, let's finalize the integration of the smart contract with the React frontend and complete the setup to interact with our Ethereum smart contract. We'll follow these steps:
+
+
+#INTEGRATE SC'S WITH FRNTND/ SC HOOK
+
+// frontend/src/hooks/useServiceContract.js
+import { useState, useEffect } from 'react';
+import Web3 from 'web3';
+import ServiceContract from '../contracts/ServiceContract.json';
+
+const useServiceContract = () => {
+    const [account, setAccount] = useState('');
+    const [contract, setContract] = useState(null);
+
+    useEffect(() => {
+        const loadBlockchainData = async () => {
+            const web3 = new Web3(Web3.givenProvider || "http://localhost:7545");
+            const accounts = await web3.eth.requestAccounts();
+            setAccount(accounts[0]);
+            
+            const networkId = await web3.eth.net.getId();
+            const networkData = ServiceContract.networks[networkId];
+            if (networkData) {
+                const contract = new web3.eth.Contract(ServiceContract.abi, networkData.address);
+                setContract(contract);
+            } else {
+                alert('Smart contract not deployed to detected network.');
+            }
+        };
+        loadBlockchainData();
+    }, []);
+
+    return { account, contract };
+};
+
+export default useServiceContract;
+
+#CREATE CONTRACT INTERACTION COMPONENTS
+
+// frontend/src/components/ServiceList.js
+import React, { useState, useEffect } from 'react';
+import useServiceContract from '../hooks/useServiceContract';
+
+const ServiceList = () => {
+    const { account, contract } = useServiceContract();
+    const [services, setServices] = useState([]);
+    
+    useEffect(() => {
+        const loadServices = async () => {
+            if (contract) {
+                // Logic to load services from contract
+            }
+        };
+        loadServices();
+    }, [contract]);
+
+    return (
+        <div>
+            <h1>Available Services</h1>
+            <ul>
+                {services.map(service => (
+                    <li key={service.id}>
+                        <h2>{service.name}</h2>
+                        <p>{service.description}</p>
+                        <p>Price: {service.price}</p>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+export default ServiceList;
+
+// frontend/src/components/CreateService.js
+import React, { useState } from 'react';
+import useServiceContract from '../hooks/useServiceContract';
+
+const CreateService = () => {
+    const { account, contract } = useServiceContract();
+    const [client, setClient] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (contract) {
+            await contract.methods.createContract(client, description, price)
+                .send({ from: account });
+        }
+    };
+
+    return (
+        <div>
+            <h1>Create Service</h1>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Client Address:</label>
+                    <input type="text" value={client} onChange={(e) => setClient(e.target.value)} />
+                </div>
+                <div>
+                    <label>Service Description:</label>
+                    <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
+                </div>
+                <div>
+                    <label>Price:</label>
+                    <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+                <button type="submit">Create Service</button>
+            </form>
+        </div>
+    );
+};
+
+export default CreateService;
+
+
