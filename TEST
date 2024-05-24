@@ -1,0 +1,14 @@
+#RUN
+ganache-cli
+
+#COMPILE AND DEPLOY
+cd smart-contracts
+truffle migrate --reset
+
+#START THE BACKEND
+cd backend
+node server.js
+
+#START THE REACT FRONTEND
+cd frontend
+npm start
