@@ -1,0 +1,15 @@
+POST http://localhost:5000/api/users/register
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "securepassword"
+}
+
+#UPDATE USER PROFILE
+
+POST http://localhost:5000/api/users/profile
+{
+  "userId": "<USER_ID>",
+  "personalityTraits": { "openness": "high", "conscientiousness": "medium" },
+  "preferences": { "preferredLanguage": "English" }
+}
